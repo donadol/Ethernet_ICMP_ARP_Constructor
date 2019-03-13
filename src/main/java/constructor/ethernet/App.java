@@ -1,16 +1,7 @@
 package constructor.ethernet;
 
-import java.io.*;
-import java.net.*;
 import java.util.Scanner;
-import java.util.concurrent.*;
-
 import org.pcap4j.core.*;
-import org.pcap4j.core.BpfProgram.BpfCompileMode;
-import org.pcap4j.core.PcapNetworkInterface.PromiscuousMode;
-import org.pcap4j.packet.*;
-import org.pcap4j.packet.namednumber.*;
-import org.pcap4j.util.*;
 
 /**
  * Hello world!
@@ -18,6 +9,7 @@ import org.pcap4j.util.*;
  */
 public class App 
 {
+	private static Scanner teclado;
 	private App() {}
 
 	public static void main(String[] args) throws PcapNativeException, NotOpenException {
@@ -26,11 +18,10 @@ public class App
 		String selecc;
 		String band;
 		String  change;
-		int tamanCamp = 0;
-		int length=65535;
-		int id=1224;
-		int ttl=100;
-		Scanner teclado = new Scanner(System.in);
+		short length=(short) 65535;
+		short id=1224;
+		short ttl=100;
+		teclado = new Scanner(System.in);
 		while(true){
 			System.out.println("Protocolos:\n1.IP\n2.ARP\n3.Salir");
 			selecc = teclado.nextLine();
@@ -49,22 +40,25 @@ public class App
 					while(true){
 						System.out.println("********************************************** " );
 						System.out.println("¿Qué campo desea cambiar? " );
-						System.out.println("1. Total lenght\n2. Identification\n3. Time to live\n4. Salir");
+						System.out.println("1. Total lenght\n2. Identification\n3. Time to live\n4. Enviar\n5. Salir");
 						change = teclado.nextLine();
 						System.out.println("********************************************** " );
 						if(change.equals("1")){
 							System.out.println("¿Qué tamaño desea para el paquete?" );
-							length = Integer.parseInt(teclado.nextLine());
+							length = Short.parseShort(teclado.nextLine());
 						}
 						else if(change.equals("2")){
 							System.out.println("¿Qué identificador desea?" );
-							id = Integer.parseInt(teclado.nextLine());
+							id = Short.parseShort(teclado.nextLine());
 						}
 						else if(change.equals("3")){
 							System.out.println("¿Qué tiempo de vida quiere?" );
-							ttl = Integer.parseInt(teclado.nextLine());
+							ttl = Short.parseShort(teclado.nextLine());
 						}
 						else if (change.equals("4")){
+							createIPMessage(ipO, ipD, length, id, ttl);
+						}
+						else if (change.equals("5")){
 							return;
 						}
 						else{
@@ -74,13 +68,12 @@ public class App
 					}
 				}
 				else{
-					System.out.println(" ALGO DEBE IR ACA " );
+					createIPMessage(ipO, ipD, length, id, ttl);
 
 				}
-				createIPMessage();
 			}
 			else if(selecc.equals("2")) { //ARP
-				
+				createARPMessage();
 			}
 			else if(selecc.equals("3")) { //Salir
 				return;
@@ -90,8 +83,11 @@ public class App
 			}
 		}
 	}
-	private static void createIPMessage() {
-		//llamar function de ip
+	private static void createIPMessage(String ipO, String ipD, short length, short id, short ttl) {
+		IP msg=new IP(ipO, ipD, length, id, ttl);
+		Sender sender = new Sender(msg);
 	}
-
+	private static void createARPMessage() {
+		
+	}
 }
