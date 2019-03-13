@@ -1,5 +1,8 @@
 package constructor.ethernet;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 import org.pcap4j.packet.*;
 import org.pcap4j.packet.namednumber.EtherType;
 import org.pcap4j.util.MacAddress;
@@ -15,23 +18,23 @@ public class ARP {
 	byte[] ar$tha;
 	byte[] ar$tpa;
 
-	public ARP(short hwtype, short protype, short hwsize, short prosize, short opcode, String macSender, String ipSender, String macTarget, String ipTarget) {
+	public ARP(short hwtype, short protype, short hwsize, short prosize, short opcode, String macSender, String ipSender, String macTarget, String ipTarget) throws UnknownHostException {
 		this.ar$hrd=Utils.shortToByteArray(hwtype);
 		this.ar$pro=Utils.shortToByteArray(protype);
 		this.ar$hln=Utils.shortToByte(hwsize);
 		this.ar$pln=Utils.shortToByte(prosize);
 		this.ar$op=Utils.shortToByteArray(opcode);
-		this.ar$sha=Utils.hexStringToByteArray(Utils.clean(macSender,":"), ar$hln);
-		this.ar$spa=Utils.StringToByteArray(ipSender, "\\.", ar$pln);
-		this.ar$tha=Utils.hexStringToByteArray(Utils.clean(macTarget,":"), ar$hln);
-		this.ar$tpa=Utils.StringToByteArray(ipTarget, "\\.", ar$pln);
+		this.ar$sha=MacAddress.getByName(macSender).getAddress();//Utils.hexStringToByteArray(Utils.clean(macSender,":"), ar$hln);
+		this.ar$spa=InetAddress.getByName(ipSender).getAddress();//Utils.StringToByteArray(ipSender, "\\.", ar$pln);
+		this.ar$tha=MacAddress.getByName(macTarget).getAddress();//Utils.hexStringToByteArray(Utils.clean(macTarget,":"), ar$hln);
+		this.ar$tpa=InetAddress.getByName(ipTarget).getAddress();//Utils.StringToByteArray(ipTarget, "\\.", ar$pln);
 	}
 	public byte[] constructARPMessage() {
 		byte[] msg = new byte[28];
 		System.arraycopy(ar$hrd, 0, msg, 0, ar$hrd.length);
 		System.arraycopy(ar$pro, 0, msg, ar$hrd.length, ar$pro.length);
-		System.arraycopy(ar$hln, 0, msg, ar$hrd.length+ar$pro.length, 1);
-		System.arraycopy(ar$pln, 0, msg, ar$hrd.length+ar$pro.length+1, 1);
+		msg[ar$hrd.length+ar$pro.length]=ar$hln;
+		msg[ar$hrd.length+ar$pro.length+1]=ar$pln;
 		System.arraycopy(ar$op,  0, msg, ar$hrd.length+ar$pro.length+2, ar$op.length);
 		System.arraycopy(ar$sha, 0, msg, ar$hrd.length+ar$pro.length+2+ar$op.length, ar$sha.length);
 		System.arraycopy(ar$spa, 0, msg, ar$hrd.length+ar$pro.length+2+ar$op.length+ar$sha.length, ar$spa.length);
@@ -44,8 +47,8 @@ public class ARP {
 		arp.rawData(constructARPMessage());
 		
 		EthernetPacket.Builder eb = new EthernetPacket.Builder();
-		eb.dstAddr(MacAddress.getByAddress(ar$sha))
-			.srcAddr(MacAddress.getByAddress(ar$tha))
+		eb.dstAddr(MacAddress.getByAddress(ar$tha))
+			.srcAddr(MacAddress.getByAddress(ar$sha))
 			.type(EtherType.ARP)
 			.payloadBuilder(arp)
 			.paddingAtBuild(true);

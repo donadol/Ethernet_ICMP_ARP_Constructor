@@ -1,7 +1,10 @@
 package constructor.ethernet;
 
+import java.net.UnknownHostException;
 import java.util.Scanner;
 import org.pcap4j.core.*;
+import org.pcap4j.packet.EthernetPacket;
+import org.pcap4j.util.*;
 
 /**
  * Hello world!
@@ -10,15 +13,19 @@ import org.pcap4j.core.*;
 public class App 
 {
 	private static Scanner teclado;
+	private static EthernetPacket packet;
+	private static Sender sender;
 	private App() {}
 
-	public static void main(String[] args) throws PcapNativeException, NotOpenException {
+	public static void main(String[] args) throws PcapNativeException, NotOpenException, UnknownHostException {
 		String ipO;
 		String ipD;
 		String selecc;
 		String band;
-		String  change;
-		short length=(short) 65535;
+		String change;
+		String macsrc;
+		String macdst;
+		int length=65535;
 		short id=1224;
 		short ttl=100;
 		teclado = new Scanner(System.in);
@@ -27,9 +34,13 @@ public class App
 			selecc = teclado.nextLine();
 			if(selecc.equals("1")) { //IP
 				System.out.print("Escriba la dirección IP del host origen: ");	
-				ipO = teclado.nextLine(); 
+				ipO = teclado.nextLine();
+				System.out.print("Escriba la dirección MAC del host origen: ");	
+				macsrc = teclado.nextLine();
 				System.out.print("Escriba la dirección IP del host destino: ");
-				ipD = teclado.nextLine(); 
+				ipD = teclado.nextLine();
+				System.out.print("Escriba la dirección MAC del host destino: ");
+				macdst = teclado.nextLine(); 
 				//sugerir campos
 				System.out.println("SE RECOMIENDA USAR EL SIGUIENTE MODELO" );
 				System.out.println("|VERSION|IHL|TOS|LENGTH|IDENTIFICATION|TTL|PROTOCOL|");
@@ -45,7 +56,7 @@ public class App
 						System.out.println("********************************************** " );
 						if(change.equals("1")){
 							System.out.println("¿Qué tamaño desea para el paquete?" );
-							length = Short.parseShort(teclado.nextLine());
+							length = Integer.parseInt(teclado.nextLine());
 						}
 						else if(change.equals("2")){
 							System.out.println("¿Qué identificador desea?" );
@@ -56,7 +67,7 @@ public class App
 							ttl = Short.parseShort(teclado.nextLine());
 						}
 						else if (change.equals("4")){
-							createIPMessage(ipO, ipD, length, id, ttl);
+							createIPMessage(ipO, ipD, length, id, ttl, macsrc, macdst);
 						}
 						else if (change.equals("5")){
 							return;
@@ -68,12 +79,19 @@ public class App
 					}
 				}
 				else{
-					createIPMessage(ipO, ipD, length, id, ttl);
-
+					createIPMessage(ipO, ipD, length, id, ttl, macsrc, macdst);
 				}
 			}
 			else if(selecc.equals("2")) { //ARP
-				createARPMessage();
+				System.out.print("Escriba la dirección MAC del host origen: ");	
+				macsrc = teclado.nextLine(); 
+				System.out.print("Escriba la dirección IP del host origen: ");	
+				ipO = teclado.nextLine(); 
+				System.out.print("Escriba la dirección MAC del host destino: ");
+				macdst = teclado.nextLine(); 
+				System.out.print("Escriba la dirección IP del host destino: ");
+				ipD = teclado.nextLine(); 
+				createARPMessage(macsrc, ipO, macdst, ipD);
 			}
 			else if(selecc.equals("3")) { //Salir
 				return;
@@ -83,11 +101,17 @@ public class App
 			}
 		}
 	}
-	private static void createIPMessage(String ipO, String ipD, short length, short id, short ttl) {
-		IP msg=new IP(ipO, ipD, length, id, ttl);
-		Sender sender = new Sender(msg);
+	private static void createIPMessage(String ipO, String ipD, int length, short id, short ttl, String macsrc, String macdst) throws UnknownHostException, PcapNativeException, NotOpenException {
+		IP msg=new IP(ipO, ipD, length, id, ttl, macsrc, macdst);
+		packet=(EthernetPacket) msg.createICMP();
+		sender = new Sender(packet);
+		sender.sendMessage();
 	}
-	private static void createARPMessage() {
-		
+	private static void createARPMessage(String macSender, String ipSender, String macTarget, String ipTarget) throws UnknownHostException, PcapNativeException, NotOpenException {
+		ARP msg=new ARP((short)1, (short)2048, (short)MacAddress.SIZE_IN_BYTES, (short)ByteArrays.INET4_ADDRESS_SIZE_IN_BYTES, (short)1, macSender, ipSender, macTarget, ipTarget);
+		packet=(EthernetPacket) msg.createARP();
+		System.out.println(packet);
+		sender = new Sender(packet);
+		sender.sendMessage();
 	}
 }
