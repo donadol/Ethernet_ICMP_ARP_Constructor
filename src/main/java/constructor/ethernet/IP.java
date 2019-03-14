@@ -9,13 +9,12 @@ import org.pcap4j.packet.namednumber.*;
 import org.pcap4j.util.MacAddress;
 
 public class IP {
-	private IcmpV4EchoPacket packet;
+	private IcmpV4EchoPacket.Builder packet;
 	private int length;
 	private short identifier;
 	private String ipsrc;
 	private String ipdst;
 	private short ttl;
-	private static short sequence=1;
 	private String macsrc;
 	private String macdst;
 	//private short sequenceNumber;
@@ -32,21 +31,32 @@ public class IP {
 
 		UnknownPacket.Builder unknownb = new UnknownPacket.Builder();
 		unknownb.rawData(this.randomMsg(this.length));
-		IcmpV4EchoPacket.Builder b = new IcmpV4EchoPacket.Builder();
-		b.identifier(identifier).sequenceNumber(sequence).payloadBuilder(unknownb);
-		this.packet = b.build();
-		sequence++;
+		
+		packet= new IcmpV4EchoPacket.Builder();
+		packet
+		.identifier(identifier)
+		.payloadBuilder(unknownb);
 	}
-	public Packet createICMP() throws UnknownHostException {
+	
+	public IcmpV4EchoPacket.Builder getPacket() {
+		return packet;
+	}
+
+	public void setPacket(IcmpV4EchoPacket.Builder packet) {
+		this.packet = packet;
+	}
+
+	public IpV4Packet.Builder createICMP() {
 		IcmpV4CommonPacket.Builder icmpV4b = new IcmpV4CommonPacket.Builder();
 		icmpV4b
-			.type(IcmpV4Type.ECHO)
-			.code(IcmpV4Code.NO_CODE)
-			.payloadBuilder(new SimpleBuilder(packet))
-			.correctChecksumAtBuild(true);
+		.type(IcmpV4Type.ECHO)
+		.code(IcmpV4Code.NO_CODE)
+		.payloadBuilder(packet)
+		.correctChecksumAtBuild(true);
 
 		IpV4Packet.Builder ipv4b = new IpV4Packet.Builder();
-		ipv4b
+		try {
+			ipv4b
 			.version(IpVersion.IPV4)
 			.tos(IpV4Rfc1349Tos.newInstance((byte) 0))
 			.identification((short) identifier)
@@ -58,20 +68,16 @@ public class IP {
 			.correctChecksumAtBuild(true)
 			.correctLengthAtBuild(true)
 			.paddingAtBuild(true);
-
-		EthernetPacket.Builder eb = new EthernetPacket.Builder();
-		eb.dstAddr(MacAddress.getByName(macdst))
-			.srcAddr(MacAddress.getByName(macsrc))//poner mac pc
-			.type(EtherType.IPV4)
-			.payloadBuilder(ipv4b)
-			.paddingAtBuild(true);
-		return eb.build();
+		} catch (UnknownHostException e1) {
+			throw new IllegalArgumentException(e1);
+		}
+		return ipv4b;
 	}
 	private byte[] randomMsg(int length) {
 		byte[] msg=new byte[length];
 		for (int i = 0; i < length; ++i) {
-            msg[i] = (byte) (Math.random()* 101);
-        }
+			msg[i] = (byte) (Math.random()* 101);
+		}
 		return msg;
 	}
 }

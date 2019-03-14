@@ -7,6 +7,7 @@ import java.util.Scanner;
 //import org.apache.log4j.LogManager;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.EthernetPacket;
+import org.pcap4j.packet.IpV4Packet;
 import org.pcap4j.util.*;
 import org.slf4j.Logger;
 
@@ -17,7 +18,6 @@ import org.slf4j.Logger;
 public class EthernetConstructor 
 {
 	private static Scanner teclado;
-	private static EthernetPacket packet;
 	private static Sender sender;
 	//private static final Logger log = (Logger) LogManager.getLogger(EthernetConstructor.class);
 	private EthernetConstructor() {}
@@ -35,14 +35,14 @@ public class EthernetConstructor
 		short ttl=100;
 		teclado = new Scanner(System.in);
 		//BasicConfigurator.configure();
+		System.out.print("Escriba la dirección MAC del host origen: ");	
+		macsrc = teclado.nextLine();
 		while(true){
 			System.out.println("Protocolos:\n1.IP\n2.ARP\n3.Salir");
 			selecc = teclado.nextLine();
 			if(selecc.equals("1")) { //IP
 				System.out.print("Escriba la dirección IP del host origen: ");	
 				ipO = teclado.nextLine();
-				System.out.print("Escriba la dirección MAC del host origen: ");	
-				macsrc = teclado.nextLine();
 				System.out.print("Escriba la dirección IP del host destino: ");
 				ipD = teclado.nextLine();
 				//System.out.print("Escriba la dirección MAC del host destino: ");
@@ -107,15 +107,15 @@ public class EthernetConstructor
 			}
 		}
 	}
-	private static void createIPMessage(String ipO, String ipD, int length, short id, short ttl, String macsrc, String macdst) throws UnknownHostException, PcapNativeException, NotOpenException {
+	private static void createIPMessage(String ipO, String ipD, int length, short id, short ttl, String macsrc, String macdst) throws PcapNativeException, NotOpenException {
 		IP msg=new IP(ipO, ipD, length, id, ttl, macsrc, macdst);
-		packet=(EthernetPacket) msg.createICMP();
+		IpV4Packet.Builder packet= msg.createICMP();
 		sender = new Sender();
-		sender.sendMessage(packet);
+		sender.sendMessage(packet, macsrc, macdst, msg.getPacket());
 	}
 	private static void createARPMessage(String macSender, String ipSender, String macTarget, String ipTarget) throws UnknownHostException, PcapNativeException, NotOpenException {
 		ARP msg=new ARP((short)1, (short)2048, (short)MacAddress.SIZE_IN_BYTES, (short)ByteArrays.INET4_ADDRESS_SIZE_IN_BYTES, (short)1, macSender, ipSender, macTarget, ipTarget);
-		packet=(EthernetPacket) msg.createARP();
+		EthernetPacket packet=(EthernetPacket) msg.createARP();
 		sender = new Sender();
 		sender.sendMessage(packet);
 	}
