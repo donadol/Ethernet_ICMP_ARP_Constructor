@@ -24,10 +24,10 @@ public class ARP {
 		this.ar$hln=Utils.shortToByte(hwsize);
 		this.ar$pln=Utils.shortToByte(prosize);
 		this.ar$op=Utils.shortToByteArray(opcode);
-		this.ar$sha=MacAddress.getByName(macSender).getAddress();//Utils.hexStringToByteArray(Utils.clean(macSender,":"), ar$hln);
-		this.ar$spa=InetAddress.getByName(ipSender).getAddress();//Utils.StringToByteArray(ipSender, "\\.", ar$pln);
-		this.ar$tha=MacAddress.getByName(macTarget).getAddress();//Utils.hexStringToByteArray(Utils.clean(macTarget,":"), ar$hln);
-		this.ar$tpa=InetAddress.getByName(ipTarget).getAddress();//Utils.StringToByteArray(ipTarget, "\\.", ar$pln);
+		this.ar$sha=MacAddress.getByName(macSender).getAddress();
+		this.ar$spa=InetAddress.getByName(ipSender).getAddress();
+		this.ar$tha=MacAddress.getByName(macTarget).getAddress();
+		this.ar$tpa=InetAddress.getByName(ipTarget).getAddress();
 	}
 	public byte[] constructARPMessage() {
 		byte[] msg = new byte[28];

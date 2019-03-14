@@ -2,20 +2,25 @@ package constructor.ethernet;
 
 import java.net.UnknownHostException;
 import java.util.Scanner;
+
+//import org.apache.log4j.BasicConfigurator;
+//import org.apache.log4j.LogManager;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.EthernetPacket;
 import org.pcap4j.util.*;
+import org.slf4j.Logger;
 
 /**
  * Hello world!
  *
  */
-public class App 
+public class EthernetConstructor 
 {
 	private static Scanner teclado;
 	private static EthernetPacket packet;
 	private static Sender sender;
-	private App() {}
+	//private static final Logger log = (Logger) LogManager.getLogger(EthernetConstructor.class);
+	private EthernetConstructor() {}
 
 	public static void main(String[] args) throws PcapNativeException, NotOpenException, UnknownHostException {
 		String ipO;
@@ -24,11 +29,12 @@ public class App
 		String band;
 		String change;
 		String macsrc;
-		String macdst;
+		String macdst="ff:ff:ff:ff:ff:ff";
 		int length=65535;
 		short id=1224;
 		short ttl=100;
 		teclado = new Scanner(System.in);
+		//BasicConfigurator.configure();
 		while(true){
 			System.out.println("Protocolos:\n1.IP\n2.ARP\n3.Salir");
 			selecc = teclado.nextLine();
@@ -39,8 +45,8 @@ public class App
 				macsrc = teclado.nextLine();
 				System.out.print("Escriba la dirección IP del host destino: ");
 				ipD = teclado.nextLine();
-				System.out.print("Escriba la dirección MAC del host destino: ");
-				macdst = teclado.nextLine(); 
+				//System.out.print("Escriba la dirección MAC del host destino: ");
+				//macdst = teclado.nextLine(); 
 				//sugerir campos
 				System.out.println("SE RECOMIENDA USAR EL SIGUIENTE MODELO" );
 				System.out.println("|VERSION|IHL|TOS|LENGTH|IDENTIFICATION|TTL|PROTOCOL|");
@@ -87,8 +93,8 @@ public class App
 				macsrc = teclado.nextLine(); 
 				System.out.print("Escriba la dirección IP del host origen: ");	
 				ipO = teclado.nextLine(); 
-				System.out.print("Escriba la dirección MAC del host destino: ");
-				macdst = teclado.nextLine(); 
+//				System.out.print("Escriba la dirección MAC del host destino: ");
+//				macdst = teclado.nextLine(); 
 				System.out.print("Escriba la dirección IP del host destino: ");
 				ipD = teclado.nextLine(); 
 				createARPMessage(macsrc, ipO, macdst, ipD);
@@ -104,14 +110,13 @@ public class App
 	private static void createIPMessage(String ipO, String ipD, int length, short id, short ttl, String macsrc, String macdst) throws UnknownHostException, PcapNativeException, NotOpenException {
 		IP msg=new IP(ipO, ipD, length, id, ttl, macsrc, macdst);
 		packet=(EthernetPacket) msg.createICMP();
-		sender = new Sender(packet);
-		sender.sendMessage();
+		sender = new Sender();
+		sender.sendMessage(packet);
 	}
 	private static void createARPMessage(String macSender, String ipSender, String macTarget, String ipTarget) throws UnknownHostException, PcapNativeException, NotOpenException {
 		ARP msg=new ARP((short)1, (short)2048, (short)MacAddress.SIZE_IN_BYTES, (short)ByteArrays.INET4_ADDRESS_SIZE_IN_BYTES, (short)1, macSender, ipSender, macTarget, ipTarget);
 		packet=(EthernetPacket) msg.createARP();
-		System.out.println(packet);
-		sender = new Sender(packet);
-		sender.sendMessage();
+		sender = new Sender();
+		sender.sendMessage(packet);
 	}
 }
